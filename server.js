@@ -11,7 +11,7 @@ const ASSISTANT_ID = 'assistant-4dea34d6-e2d8-4307-95b5-6c0a489d473a';
 
 // Single customer
 const customer = {
-  phone_number: "+13109082230",
+  phone_number: "+1123456789",
   first_name: "Alice",
   car_year: "2018",
   car_make: "Toyota",
@@ -25,7 +25,7 @@ const customer = {
   recurring_fees_due: "0.00",
   late_fees_due: "0.00",
   other_receivables_due: "0.00",
-  live_agent_phone_number: "+13109082230",
+  live_agent_phone_number: "+1123456789",
   ivr_phone_number: "+18007654321",
   due_date: "2025-07-31",
   rfc_name: "RFC Finance",
