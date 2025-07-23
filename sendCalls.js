@@ -8,11 +8,13 @@ const ACCOUNT_SID = 'ce3abd6a-bbc4-4b1c-b3c8-3a5210e725f6';
 const APPLICATION_SID = '2741690567753729623';
 const FROM_NUMBER = '+18887600227';
 
-const DYNAMIC_URL = 'https://43ef4784155f.ngrok-free.app/dynamic-variables';
+// NOTE: Replace the URLS below with your own tunnel URLs
+// These URLs are temporary and tied to my local environment
+const DYNAMIC_URL = 'https://43ef4784155f.ngrok-free.app/dynamic-variables'; 
 const STATUS_CALLBACK = 'https://43ef4784155f.ngrok-free.app/status-callback';
 
-// https://33f88a12c069.ngrok-free.app/dynamic-variables
-
+// This function makes an actual phone call from Claire to customer.phone_number
+// Initiated by command: node sendCalls.js
 async function makeCall() {
   const payload = {
     ApplicationSid: APPLICATION_SID,

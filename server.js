@@ -6,6 +6,7 @@ const port = 3000;
 
 app.use(bodyParser.json());
 
+// Claire's Assistant ID
 const ASSISTANT_ID = 'assistant-4dea34d6-e2d8-4307-95b5-6c0a489d473a';
 
 // Single customer
@@ -32,7 +33,10 @@ const customer = {
   preferred_language: "es",
 };
 
-
+// Voice Webhook endpoint:
+// Responds to Telnyx Voice API to initiate the AI assistant call.
+// The Assistant ID must match the one configured in your Telnyx AI Assistant setup.
+// Make sure this endpoint is reachable from Telnyx (use ngrok or deploy).
 app.post('/voice-webhook', (req, res) => {
   const teXML = `
     <Response>
@@ -46,7 +50,10 @@ app.post('/voice-webhook', (req, res) => {
 
 
 
-// Dynamic Variables Webhook
+// Dynamic Variables Webhook endpoint:
+// Responds with personalized data for the AI assistant based on the called phone number.
+// Dynamically sets greeting text, voice, and language variables depending on customer's preferred language.
+// Make sure your assistant references these variables for dynamic, localized conversations.
 app.post('/dynamic-variables', (req, res) => {
   const to = req.body?.data?.payload?.to;
 
@@ -99,12 +106,19 @@ app.post('/dynamic-variables', (req, res) => {
 });
 
 
-// Optional: status callback endpoint (not required for just one call)
+// Status Callback endpoint:
+// Receives call status updates (e.g. call started, answered, completed) from Telnyx.
+// Useful for logging and troubleshooting call flow.
 app.post('/status-callback', (req, res) => {
   console.log('📞 Call status update:', req.body?.data?.event_type);
   res.sendStatus(200);
 });
 
+
+// Log Interaction endpoint:
+// Receives conversational insights from Claire AI assistant after each interaction.
+// Parses intent, payment date, summary, and follow-up info for logging and analytics.
+// Extend as needed to persist data to a database or CRM.
 app.post('/log-interaction', (req, res) => {
   console.log('🧠 Claire Insight Log raw payload:', JSON.stringify(req.body, null, 2));
 
