@@ -4,46 +4,30 @@ const bodyParser = require('body-parser');
 const app = express();
 const port = 3000;
 const customers = require('./customers');
-const assistantMap = new Map();
 
 app.use(bodyParser.json());
 
-const ENGLISH_ASSISTANT_ID = 'assistant-4dea34d6-e2d8-4307-95b5-6c0a489d473a';
-const SPANISH_ASSISTANT_ID = 'assistant-928d797f-6b4b-4c60-9668-79ee69b12e0f';
+// Only one assistant ID now — bilingual assistant
+const BILINGUAL_ASSISTANT_ID = 'assistant-4dea34d6-e2d8-4307-95b5-6c0a489d473a';
 
 // Voice Webhook endpoint
 app.post('/voice-webhook', (req, res) => {
-  const sessionId = req.body.CallSid || req.body.call_session_id;
-  const assistantId = assistantMap.get(sessionId) || ENGLISH_ASSISTANT_ID;
-
   const teXML = `
     <Response>
       <AI>
-        <Assistant id="${assistantId}" />
+        <Assistant id="${BILINGUAL_ASSISTANT_ID}" />
       </AI>
     </Response>
   `;
   res.type('application/xml').send(teXML.trim());
 });
 
-// Dynamic Variables and Language Mapping
+// Dynamic Variables
 let currentIndex = 0;
 
 app.post('/dynamic-variables', (req, res) => {
   const customer = customers[currentIndex];
   currentIndex = (currentIndex + 1) % customers.length;
-
-  const sessionId = req.body.call?.call_session_id || req.body.CallSid;
-  const lang = (customer.preferred_language || 'en').toLowerCase();
-
-  const assistantId = (lang === 'es' || lang === 'spanish')
-    ? SPANISH_ASSISTANT_ID
-    : ENGLISH_ASSISTANT_ID;
-
-  if (sessionId) {
-    assistantMap.set(sessionId, assistantId);
-    setTimeout(() => assistantMap.delete(sessionId), 10 * 60 * 1000); // Cleanup after 10 min
-  }
 
   const greeting_text = `Hi ${customer.first_name}, this is Claire from ${customer.dealer_name}. I'm reaching out to remind you of your upcoming payment of $${customer.amount_due} for your ${customer.car_year} ${customer.car_make} ${customer.car_model}. If now's a good time, I'd be happy to help you with your payment—or we can set up a time that works better for you. How does that sound? Si prefiere español, diga “Español.”`;
 
@@ -55,25 +39,6 @@ app.post('/dynamic-variables', (req, res) => {
       greeting_text,
     }
   });
-});
-
-// Endpoint to switch assistants mid-call (e.g., from English to Spanish)
-app.post('/switch-language', (req, res) => {
-  const sessionId = req.body.call_session_id || req.body.CallSid;
-  const newLang = req.body.language;
-
-  if (!sessionId || !newLang) {
-    return res.status(400).json({ error: 'Missing sessionId or language' });
-  }
-
-  const assistantId = (newLang.toLowerCase() === 'es' || newLang.toLowerCase() === 'spanish')
-    ? SPANISH_ASSISTANT_ID
-    : ENGLISH_ASSISTANT_ID;
-
-  assistantMap.set(sessionId, assistantId);
-  console.log(`🔄 Switched assistant for session ${sessionId} to ${newLang}`);
-
-  res.sendStatus(200);
 });
 
 // Status Callback endpoint

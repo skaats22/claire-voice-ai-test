@@ -19,6 +19,7 @@ module.exports = [
     "due_date": "2025-07-31",
     "rfc_name": "RFC Finance",
     "co_buyer_name": "John Doe",
+    "preferred_language": "es",
   },
   {
     "phone_number": "+13109082230",
@@ -40,5 +41,6 @@ module.exports = [
     "due_date": "2025-08-01",
     "rfc_name": "RFC Finance",
     "co_buyer_name": "",
+    "preferred_language": "en",
   }
 ]
