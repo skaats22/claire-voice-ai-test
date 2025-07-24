@@ -1,7 +1,7 @@
 // sendCall.js
 require('dotenv').config();
 const axios = require('axios');
-const customer = require('./server')
+const customer = require('./serverSingle')
 
 const TELNYX_API_KEY = process.env.TELNYX_API_KEY;
 const ACCOUNT_SID = 'ce3abd6a-bbc4-4b1c-b3c8-3a5210e725f6';
@@ -10,8 +10,8 @@ const FROM_NUMBER = '+18887600227';
 
 // NOTE: Replace the URLS below with your own tunnel URLs
 // These URLs are temporary and tied to my local environment
-const DYNAMIC_URL = 'https://43ef4784155f.ngrok-free.app/dynamic-variables'; 
-const STATUS_CALLBACK = 'https://43ef4784155f.ngrok-free.app/status-callback';
+const DYNAMIC_URL = 'https://f55fbf66297d.ngrok-free.app/dynamic-variables'; 
+const STATUS_CALLBACK = 'https://f55fbf66297d.ngrok-free.app/status-callback';
 
 // This function makes an actual phone call from Claire to customer.phone_number
 // Initiated by command: node sendCalls.js

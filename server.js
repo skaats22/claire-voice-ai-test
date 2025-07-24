@@ -4,129 +4,48 @@ const bodyParser = require('body-parser');
 const app = express();
 const port = 3000;
 const customers = require('./customers');
+const assistantMap = new Map();
 
 app.use(bodyParser.json());
 
-// Claire's Assistant ID
-const ASSISTANT_ID = 'assistant-4dea34d6-e2d8-4307-95b5-6c0a489d473a';
+const ENGLISH_ASSISTANT_ID = 'assistant-4dea34d6-e2d8-4307-95b5-6c0a489d473a';
+const SPANISH_ASSISTANT_ID = 'assistant-928d797f-6b4b-4c60-9668-79ee69b12e0f';
 
-// Single customer
-// const customer = {
-//   phone_number: "+1123456789",
-//   first_name: "Alice",
-//   car_year: "2018",
-//   car_make: "Toyota",
-//   car_model: "Camry",
-//   amount_due: "450.00",
-//   dealer_name: "Cavalier Motors",
-//   dealer_website: "www.pay.carpay.com",
-//   regular_amount_due: "0.00",
-//   pickups_due: "0.00",
-//   side_notes_due: "0.00",
-//   recurring_fees_due: "0.00",
-//   late_fees_due: "0.00",
-//   other_receivables_due: "0.00",
-//   live_agent_phone_number: "+1123456789",
-//   ivr_phone_number: "+18007654321",
-//   due_date: "2025-07-31",
-//   rfc_name: "RFC Finance",
-//   co_buyer_name: "John Doe",
-//   preferred_language: "es",
-// };
-
-// Voice Webhook endpoint:
-// Responds to Telnyx Voice API to initiate the AI assistant call.
-// The Assistant ID must match the one configured in your Telnyx AI Assistant setup.
-// Make sure this endpoint is reachable from Telnyx (use ngrok or deploy).
+// Voice Webhook endpoint
 app.post('/voice-webhook', (req, res) => {
+  const sessionId = req.body.CallSid || req.body.call_session_id;
+  const assistantId = assistantMap.get(sessionId) || ENGLISH_ASSISTANT_ID;
+
   const teXML = `
     <Response>
       <AI>
-        <Assistant id="${ASSISTANT_ID}" />
+        <Assistant id="${assistantId}" />
       </AI>
     </Response>
   `;
   res.type('application/xml').send(teXML.trim());
 });
 
-
-//       ** Single customer webhook **
-// Dynamic Variables Webhook endpoint:
-// Responds with personalized data for the AI assistant based on the called phone number.
-// Dynamically sets greeting text, voice, and language variables depending on customer's preferred language.
-// Make sure your assistant references these variables for dynamic, localized conversations.
-/*
-app.post('/dynamic-variables', (req, res) => {
-  const to = req.body?.data?.payload?.to;
-
-  const lang = (customer.preferred_language || 'en').toLowerCase();
-
-  // Set voice dynamically based on language preference
-  const voice = (lang === 'es' || lang === 'spanish')
-    ? 'Telnyx.NaturalHD.Astra'  // Use your Spanish voice here
-    : 'Telnyx.NaturalHD.Astra'; // English voice (you can change if needed)
-
-  // language variable for your assistant logic (if needed)
-  const language = (lang === 'es' || lang === 'spanish') ? 'spanish' : 'english';
-
-  const greeting_text = (lang === 'es' || lang === 'spanish')
-    ? `Hola ${customer.first_name}, te habla Claire de ${customer.dealer_name}. Te llamo para recordarte de tu próximo pago de $${customer.amount_due} por tu ${customer.car_year} ${customer.car_make} ${customer.car_model}. Si este es un buen momento, puedo ayudarte con el pago, o podemos fijar una hora que funcione mejor para ti. ¿Te parece bien?`
-    : `Hi ${customer.first_name}, this is Claire from ${customer.dealer_name}. I'm reaching out to remind you of your upcoming payment of $${customer.amount_due} for your ${customer.car_year} ${customer.car_make} ${customer.car_model}. If now's a good time, I'd be happy to help you with your payment—or we can set up a time that works better for you. How does that sound?`;
-
-  if (to !== customer.phone_number) {
-    return res.status(404).json({ error: "Customer not found" });
-  }
-
-  console.log(`✅ Sending dynamic variables for ${to}`);
-
-  return res.json({
-    dynamic_variables: {
-      first_name: customer.first_name,
-      car_year: customer.car_year,
-      car_make: customer.car_make,
-      car_model: customer.car_model,
-      amount_due: customer.amount_due,
-      dealer_name: customer.dealer_name,
-      dealer_website: customer.dealer_website,
-      regular_amount_due: customer.regular_amount_due,
-      pickups_due: customer.pickups_due,
-      side_notes_due: customer.side_notes_due,
-      recurring_fees_due: customer.recurring_fees_due,
-      late_fees_due: customer.late_fees_due,
-      other_receivables_due: customer.other_receivables_due,
-      live_agent_phone_number: customer.live_agent_phone_number,
-      ivr_phone_number: customer.ivr_phone_number,
-      due_date: customer.due_date,
-      rfc_name: customer.rfc_name,
-      co_buyer_name: customer.co_buyer_name,
-      preferred_language: customer.preferred_language,
-      greeting_text,
-      voice,
-      language,
-    }
-  });
-});
-*/
-
-//       ** Multiple customer webhook **
+// Dynamic Variables and Language Mapping
 let currentIndex = 0;
 
 app.post('/dynamic-variables', (req, res) => {
-  // Pick the next customer in order, loop back if at the end
   const customer = customers[currentIndex];
   currentIndex = (currentIndex + 1) % customers.length;
 
+  const sessionId = req.body.call?.call_session_id || req.body.CallSid;
   const lang = (customer.preferred_language || 'en').toLowerCase();
 
-  const voice = (lang === 'es' || lang === 'spanish')
-    ? 'Telnyx.NaturalHD.Astra'
-    : 'Telnyx.NaturalHD.Astra';
+  const assistantId = (lang === 'es' || lang === 'spanish')
+    ? SPANISH_ASSISTANT_ID
+    : ENGLISH_ASSISTANT_ID;
 
-  const language = (lang === 'es' || lang === 'spanish') ? 'spanish' : 'english';
+  if (sessionId) {
+    assistantMap.set(sessionId, assistantId);
+    setTimeout(() => assistantMap.delete(sessionId), 10 * 60 * 1000); // Cleanup after 10 min
+  }
 
-  const greeting_text = (lang === 'es' || lang === 'spanish')
-    ? `Hola ${customer.first_name}, te habla Claire de ${customer.dealer_name}. Te llamo para recordarte de tu próximo pago de $${customer.amount_due} por tu ${customer.car_year} ${customer.car_make} ${customer.car_model}. Si este es un buen momento, puedo ayudarte con el pago, o podemos fijar una hora que funcione mejor para ti. ¿Te parece bien?`
-    : `Hi ${customer.first_name}, this is Claire from ${customer.dealer_name}. I'm reaching out to remind you of your upcoming payment of $${customer.amount_due} for your ${customer.car_year} ${customer.car_make} ${customer.car_model}. If now's a good time, I'd be happy to help you with your payment—or we can set up a time that works better for you. How does that sound?`;
+  const greeting_text = `Hi ${customer.first_name}, this is Claire from ${customer.dealer_name}. I'm reaching out to remind you of your upcoming payment of $${customer.amount_due} for your ${customer.car_year} ${customer.car_make} ${customer.car_model}. If now's a good time, I'd be happy to help you with your payment—or we can set up a time that works better for you. How does that sound? Si prefiere español, diga “Español.”`;
 
   console.log(`✅ Sending dynamic variables for customer ${customer.first_name}`);
 
@@ -134,25 +53,36 @@ app.post('/dynamic-variables', (req, res) => {
     dynamic_variables: {
       ...customer,
       greeting_text,
-      voice,
-      language,
     }
   });
 });
 
-// Status Callback endpoint:
-// Receives call status updates (e.g. call started, answered, completed) from Telnyx.
-// Useful for logging and troubleshooting call flow.
+// Endpoint to switch assistants mid-call (e.g., from English to Spanish)
+app.post('/switch-language', (req, res) => {
+  const sessionId = req.body.call_session_id || req.body.CallSid;
+  const newLang = req.body.language;
+
+  if (!sessionId || !newLang) {
+    return res.status(400).json({ error: 'Missing sessionId or language' });
+  }
+
+  const assistantId = (newLang.toLowerCase() === 'es' || newLang.toLowerCase() === 'spanish')
+    ? SPANISH_ASSISTANT_ID
+    : ENGLISH_ASSISTANT_ID;
+
+  assistantMap.set(sessionId, assistantId);
+  console.log(`🔄 Switched assistant for session ${sessionId} to ${newLang}`);
+
+  res.sendStatus(200);
+});
+
+// Status Callback endpoint
 app.post('/status-callback', (req, res) => {
   console.log('📞 Call status update:', req.body?.data?.event_type);
   res.sendStatus(200);
 });
 
-
-// Log Interaction endpoint:
-// Receives conversational insights from Claire AI assistant after each interaction.
-// Parses intent, payment date, summary, and follow-up info for logging and analytics.
-// Extend as needed to persist data to a database or CRM.
+// Log Interaction endpoint
 app.post('/log-interaction', (req, res) => {
   console.log('🧠 Claire Insight Log raw payload:', JSON.stringify(req.body, null, 2));
 
@@ -165,7 +95,6 @@ app.post('/log-interaction', (req, res) => {
   let follow_up = null;
 
   if (Array.isArray(payload.results)) {
-    // Extract the JSON from the first result item
     try {
       const firstResult = JSON.parse(payload.results[0].result);
       intent_to_pay = firstResult.intent_to_pay;
@@ -175,7 +104,6 @@ app.post('/log-interaction', (req, res) => {
       console.error('❌ Failed to parse first result JSON:', err);
     }
 
-    // Extract summary text from second result item (if exists)
     summary = payload.results[1]?.result || '';
   }
 
@@ -191,10 +119,6 @@ app.post('/log-interaction', (req, res) => {
   res.sendStatus(200);
 });
 
-
 app.listen(port, () => {
   console.log(`🚀 Webhook server listening on port ${port}`);
 });
-
-
-// module.exports = customer;
