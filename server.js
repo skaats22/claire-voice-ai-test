@@ -3,6 +3,7 @@ const express = require('express');
 const bodyParser = require('body-parser');
 const app = express();
 const port = 3000;
+const customers = require('./customers');
 
 app.use(bodyParser.json());
 
@@ -10,28 +11,28 @@ app.use(bodyParser.json());
 const ASSISTANT_ID = 'assistant-4dea34d6-e2d8-4307-95b5-6c0a489d473a';
 
 // Single customer
-const customer = {
-  phone_number: "+1123456789",
-  first_name: "Alice",
-  car_year: "2018",
-  car_make: "Toyota",
-  car_model: "Camry",
-  amount_due: "450.00",
-  dealer_name: "Cavalier Motors",
-  dealer_website: "www.pay.carpay.com",
-  regular_amount_due: "0.00",
-  pickups_due: "0.00",
-  side_notes_due: "0.00",
-  recurring_fees_due: "0.00",
-  late_fees_due: "0.00",
-  other_receivables_due: "0.00",
-  live_agent_phone_number: "+1123456789",
-  ivr_phone_number: "+18007654321",
-  due_date: "2025-07-31",
-  rfc_name: "RFC Finance",
-  co_buyer_name: "John Doe",
-  preferred_language: "es",
-};
+// const customer = {
+//   phone_number: "+1123456789",
+//   first_name: "Alice",
+//   car_year: "2018",
+//   car_make: "Toyota",
+//   car_model: "Camry",
+//   amount_due: "450.00",
+//   dealer_name: "Cavalier Motors",
+//   dealer_website: "www.pay.carpay.com",
+//   regular_amount_due: "0.00",
+//   pickups_due: "0.00",
+//   side_notes_due: "0.00",
+//   recurring_fees_due: "0.00",
+//   late_fees_due: "0.00",
+//   other_receivables_due: "0.00",
+//   live_agent_phone_number: "+1123456789",
+//   ivr_phone_number: "+18007654321",
+//   due_date: "2025-07-31",
+//   rfc_name: "RFC Finance",
+//   co_buyer_name: "John Doe",
+//   preferred_language: "es",
+// };
 
 // Voice Webhook endpoint:
 // Responds to Telnyx Voice API to initiate the AI assistant call.
@@ -49,11 +50,12 @@ app.post('/voice-webhook', (req, res) => {
 });
 
 
-
+//       ** Single customer webhook **
 // Dynamic Variables Webhook endpoint:
 // Responds with personalized data for the AI assistant based on the called phone number.
 // Dynamically sets greeting text, voice, and language variables depending on customer's preferred language.
 // Make sure your assistant references these variables for dynamic, localized conversations.
+/*
 app.post('/dynamic-variables', (req, res) => {
   const to = req.body?.data?.payload?.to;
 
@@ -104,7 +106,39 @@ app.post('/dynamic-variables', (req, res) => {
     }
   });
 });
+*/
 
+//       ** Multiple customer webhook **
+let currentIndex = 0;
+
+app.post('/dynamic-variables', (req, res) => {
+  // Pick the next customer in order, loop back if at the end
+  const customer = customers[currentIndex];
+  currentIndex = (currentIndex + 1) % customers.length;
+
+  const lang = (customer.preferred_language || 'en').toLowerCase();
+
+  const voice = (lang === 'es' || lang === 'spanish')
+    ? 'Telnyx.NaturalHD.Astra'
+    : 'Telnyx.NaturalHD.Astra';
+
+  const language = (lang === 'es' || lang === 'spanish') ? 'spanish' : 'english';
+
+  const greeting_text = (lang === 'es' || lang === 'spanish')
+    ? `Hola ${customer.first_name}, te habla Claire de ${customer.dealer_name}. Te llamo para recordarte de tu próximo pago de $${customer.amount_due} por tu ${customer.car_year} ${customer.car_make} ${customer.car_model}. Si este es un buen momento, puedo ayudarte con el pago, o podemos fijar una hora que funcione mejor para ti. ¿Te parece bien?`
+    : `Hi ${customer.first_name}, this is Claire from ${customer.dealer_name}. I'm reaching out to remind you of your upcoming payment of $${customer.amount_due} for your ${customer.car_year} ${customer.car_make} ${customer.car_model}. If now's a good time, I'd be happy to help you with your payment—or we can set up a time that works better for you. How does that sound?`;
+
+  console.log(`✅ Sending dynamic variables for customer ${customer.first_name}`);
+
+  return res.json({
+    dynamic_variables: {
+      ...customer,
+      greeting_text,
+      voice,
+      language,
+    }
+  });
+});
 
 // Status Callback endpoint:
 // Receives call status updates (e.g. call started, answered, completed) from Telnyx.
@@ -163,4 +197,4 @@ app.listen(port, () => {
 });
 
 
-module.exports = customer;
+// module.exports = customer;
