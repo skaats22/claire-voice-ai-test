@@ -21,8 +21,11 @@ app.post('/log-interaction', logInteractionHandler);
 app.post('/status-callback', statusCallbackHandler);
 app.get('/dashboard', dashboardHandler);
 
-// Start the initial batch of calls
-queueManager.maybeStartNewCalls();
+app.post('/start-calls', (req, res) => {
+  queueManager.maybeStartNewCalls();
+  res.send('🚀 Call batch started.');
+});
+
 
 app.listen(port, () => {
   console.log(`🚀 Server running on http://localhost:${port}`);

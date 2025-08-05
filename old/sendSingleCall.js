@@ -7,9 +7,9 @@ const ACCOUNT_SID = 'ce3abd6a-bbc4-4b1c-b3c8-3a5210e725f6';
 const APPLICATION_SID = '2741690567753729623';
 const FROM_NUMBER = '+18887600227';
 
-// Replace with your own tunnel URLs for your server endpoints
-const DYNAMIC_URL = 'https://7251fac567de.ngrok-free.app/dynamic-variables'; 
-const STATUS_CALLBACK = 'https://7251fac567de.ngrok-free.app/status-callback';
+const NGROK_URL = process.env.NGROK_URL;
+const DYNAMIC_URL = `${NGROK_URL}/dynamic-variables`;
+const STATUS_CALLBACK = `${NGROK_URL}/status-callback`;
 
 // Get the first customer from the list
 const customer = customers[0];

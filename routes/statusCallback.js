@@ -1,11 +1,10 @@
-// routes/statusCallback.js
 const queueManager = require('../queueManager');
 
 module.exports = (req, res) => {
-  const eventType = req.body?.webhook_payload?.data?.event_type || 'unknown';
-  console.log('📞 Call status update:', eventType);
+  const eventType = req.body?.webhook_payload?.data?.event_type || '';
+  console.log('Webhook event:', eventType);
 
-  if (eventType === 'call.hangup' || eventType === 'call.ended') {
+  if (['call.ended', 'call.hangup', 'call.completed'].includes(eventType)) {
     queueManager.notifyCallEnded();
   }
 

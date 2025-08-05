@@ -7,9 +7,9 @@ const ACCOUNT_SID = 'ce3abd6a-bbc4-4b1c-b3c8-3a5210e725f6';  // replace with you
 const APPLICATION_SID = '2741690567753729623'; // your Voice API App SID
 const FROM_NUMBER = '+18887600227'; // your Telnyx number
 
-// Replace with your own ngrok or deployed URLs
-const DYNAMIC_URL = 'https://7251fac567de.ngrok-free.app/dynamic-variables'; 
-const STATUS_CALLBACK = 'https://7251fac567de.ngrok-free.app/status-callback';
+const NGROK_URL = process.env.NGROK_URL;
+const DYNAMIC_URL = `${NGROK_URL}/dynamic-variables`;
+const STATUS_CALLBACK = `${NGROK_URL}/status-callback`;
 
 async function delay(ms) {
   return new Promise(resolve => setTimeout(resolve, ms));

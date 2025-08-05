@@ -1,8 +1,11 @@
 const axios = require('axios');
 
+const NGROK_URL = process.env.NGROK_URL;
+const DYNAMIC_URL = `${NGROK_URL}/dynamic-variables`;
+const STATUS_CALLBACK = `${NGROK_URL}/status-callback`;
+
 async function simulateWebhook() {
-  // Replace with your local/ngrok URL where your server listens for webhook
-  const webhookUrl = 'https://YOUR_NGROK_URL/status-callback';
+  const webhookUrl = STATUS_CALLBACK;
 
   // Sample mock payload mimicking a Telnyx call status event
   const mockPayload = {
