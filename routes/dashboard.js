@@ -1,6 +1,7 @@
 // routes/dashboard.js
 const callStatusMap = require('../callStatusStore');
 const customers = require('../customers');
+const customerMap = require('../customerIndex');
 
 function formatDateTime(timestamp) {
   if (!timestamp) return ['', ''];
@@ -47,7 +48,7 @@ module.exports = (req, res) => {
 
   for (const entry of callStatusMap.values()) {
     // Find customer by phone number
-    const customer = customers.find(c => c.phone === entry.phone) || {};
+    const customer = customerMap.get(entry.customer_id) || {};
 
     const [date, time] = formatDateTime(entry.timestamp);
 
@@ -55,7 +56,7 @@ module.exports = (req, res) => {
       <tr>
         <td>${customer.first_name || ''}</td>
         <td>${customer.last_name || ''}</td>
-        <td>${entry.phone}</td>
+        <td>${entry.phone_number}</td>
         <td>${entry.intent_to_pay || ''}</td>
         <td>${entry.intent_to_pay_date || ''}</td>
         <td>${entry.follow_up || ''}</td>

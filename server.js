@@ -27,7 +27,6 @@ app.post('/start-calls', (req, res) => {
   res.send('🚀 Call batch started.');
 });
 
-
 app.listen(port, () => {
   console.log(`🚀 Server running on http://localhost:${port}`);
 });

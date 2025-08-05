@@ -14,12 +14,41 @@ const NGROK_URL = process.env.NGROK_URL;
 const DYNAMIC_URL = `${NGROK_URL}/dynamic-variables`;
 const STATUS_CALLBACK = `${NGROK_URL}/status-callback`;
 
+const MOCK_MODE = true; // 👈 Set to false when you're ready for real calls
+
 const MAX_CONCURRENT_CALLS = parseInt(process.env.CONCURRENT_LIMIT, 10) || 1;
 
 let activeCalls = 0;
 const queue = [...customers]; // clone customer list on start
 
 async function placeCall(customer) {
+  if (MOCK_MODE) {
+    const mockCallSid = `mock-${Date.now()}`;
+
+    callStatusMap.set(mockCallSid, {
+      customer_id: customer.id,
+      phone_number: customer.phone_number,
+      first_name: customer.first_name,
+      last_name: customer.last_name,
+      timestamp: new Date().toISOString(),
+    });
+
+    console.log(`🧪 MOCK: Simulating call for ${customer.first_name}`);
+
+    setTimeout(() => {
+      axios.post(`${NGROK_URL}/status-callback`, {
+        CallSid: mockCallSid,
+        CallDuration: '42',
+        CallStatus: 'completed',
+        HangupSource: 'callee',
+      }).catch(err => {
+        console.error('❌ Failed to post mock webhook:', err.message);
+      });
+    }, 1000);
+
+    return;
+  }
+
   const payload = {
     ApplicationSid: APPLICATION_SID,
     To: customer.phone_number,
