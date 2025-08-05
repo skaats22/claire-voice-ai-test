@@ -1,6 +1,7 @@
 // customers.js
 module.exports = [
   {
+    id: 1,
     phone_number: "+13109082230",
     first_name: "Alice",
     last_name: "Sample1",
@@ -27,6 +28,7 @@ module.exports = [
     card_on_file: "1234",
   },
   {
+    id: 2,
     phone_number: "+13109082230",
     first_name: "Bob",
     last_name: "Sample2",

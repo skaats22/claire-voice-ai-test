@@ -1,6 +1,8 @@
+// queueManager.js
 require('dotenv').config();
 const axios = require('axios');
-const customers = require('./customers'); // Make sure this has the current customer list
+const customers = require('./customers');
+const callStatusMap = require('./callStatusStore'); // your call info store
 
 // Env variables
 const TELNYX_API_KEY = process.env.TELNYX_API_KEY;
@@ -9,15 +11,13 @@ const APPLICATION_SID = process.env.APPLICATION_SID;
 const FROM_NUMBER = process.env.FROM_NUMBER;
 const NGROK_URL = process.env.NGROK_URL;
 
-// Endpoints
 const DYNAMIC_URL = `${NGROK_URL}/dynamic-variables`;
 const STATUS_CALLBACK = `${NGROK_URL}/status-callback`;
 
-// Concurrency control
 const MAX_CONCURRENT_CALLS = parseInt(process.env.CONCURRENT_LIMIT, 10) || 1;
 
 let activeCalls = 0;
-const queue = [...customers]; // Copy of customer list
+const queue = [...customers]; // clone customer list on start
 
 async function placeCall(customer) {
   const payload = {
@@ -27,32 +27,49 @@ async function placeCall(customer) {
     DynamicVariablesUrl: DYNAMIC_URL,
     DynamicVariablesMethod: 'POST',
     StatusCallback: STATUS_CALLBACK,
-    StatusCallbackMethod: 'POST'
+    StatusCallbackMethod: 'POST',
   };
 
   try {
-    await axios.post(
+    const response = await axios.post(
       `https://api.telnyx.com/v2/texml/Accounts/${ACCOUNT_SID}/Calls`,
       payload,
       {
         headers: {
           Authorization: `Bearer ${TELNYX_API_KEY}`,
-          'Content-Type': 'application/json'
-        }
+          'Content-Type': 'application/json',
+        },
       }
     );
+
+    console.log('API call response data:', response.data);
+    const callSid = response.data?.sid;
+
+
+    if (!callSid) {
+      console.warn('No CallSid returned from Telnyx API');
+    } else {
+      callStatusMap.set(callSid, {
+        customer_id: customer.id,
+        phone: customer.phone_number,
+        first_name: customer.first_name,
+        last_name: customer.last_name,
+        timestamp: new Date().toISOString(),
+      });
+    }
 
     console.log(`📞 Real call started: ${customer.first_name}`);
   } catch (error) {
     console.error(`❌ Failed to call ${customer.first_name}:`, error.response?.data || error.message);
-    notifyCallEnded(); // If call fails, decrement and try next
+    notifyCallEnded(); // Allow next calls to proceed on failure
   }
 }
 
 function maybeStartNewCalls() {
   while (activeCalls < MAX_CONCURRENT_CALLS && queue.length > 0) {
     const customer = queue.shift();
-    activeCalls++; // Increment before async call
+    console.log('📞 Attempting call to:', customer.first_name, customer.phone_number);
+    activeCalls++;
     placeCall(customer);
   }
 
@@ -67,7 +84,14 @@ function notifyCallEnded() {
   maybeStartNewCalls();
 }
 
+function resetQueue() {
+  queue.length = 0;
+  queue.push(...customers);
+  activeCalls = 0;
+}
+
 module.exports = {
   maybeStartNewCalls,
-  notifyCallEnded
+  notifyCallEnded,
+  resetQueue,
 };
