@@ -1,4 +1,4 @@
-// customerIndex.js
+// customerIndex.js creates DB by customer ID upon server start
 const customers = require('./customers');
 
 const customerMap = new Map();

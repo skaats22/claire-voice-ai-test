@@ -1,40 +1,35 @@
+const express = require('express');
+const router = express.Router();
 const callStatusMap = require('../callStatusStore');
-const queueManager = require('../queueManager'); // for notifyCallEnded()
+const queueManager = require('../queueManager');
+const { writeToCSV, prepareRowFromCallInfo } = require('../utils/logUtils'); // we'll create utils
 
-module.exports = (req, res) => {
+router.post('/status-callback', (req, res) => {
   const body = req.body;
-  console.log('Webhook body:', body);
+  const callSid = body.CallSid || body.call_control_id || 'unknown';
+  const callInfo = callStatusMap.get(callSid);
 
-  // The CallSid identifying the call
-  const callSid = body.CallSid || body.callSid || (body.data && body.data.id);
-
-  if (!callSid) {
-    console.warn('No CallSid in callback');
-    return res.sendStatus(400);
-  }
-
-  // Find the stored call info for this callSid
-  const callEntry = callStatusMap.get(callSid);
-
-  if (!callEntry) {
-    console.warn(`No call info found for CallSid: ${callSid}`);
+  if (!callInfo) {
+    console.warn(`⚠️ No call info found for CallSid: ${callSid}`);
     return res.sendStatus(404);
   }
 
-  // Update call info from webhook data
-  callEntry.call_outcome = body.CallStatus || callEntry.call_outcome || '';
-  callEntry.call_duration = body.CallDuration || callEntry.call_duration || '';
-  callEntry.hangup_source = body.HangupSource || callEntry.hangup_source || '';
-  callEntry.timestamp = new Date().toISOString();
+  callInfo.telnyx_status = body.CallStatus || callInfo.telnyx_status;
+  callInfo.call_duration = body.CallDuration || callInfo.call_duration || '';
+  callInfo.hangup_source = body.HangupSource || callInfo.hangup_source || '';
+  callInfo.timestamp = new Date().toISOString();
 
-  // Save updated entry back
-  callStatusMap.set(callSid, callEntry);
+  callStatusMap.set(callSid, callInfo);
 
-  // If call is completed or failed, mark call ended and start next calls
-  if (['completed', 'no-answer', 'busy', 'failed', 'canceled'].includes(body.CallStatus)) {
+  // Notify queue manager on call end states
+  if (['completed', 'no-answer', 'busy', 'failed', 'canceled'].includes(callInfo.telnyx_status)) {
     queueManager.notifyCallEnded();
-    console.log(`📴 Call ended: ${callSid}, outcome: ${body.CallStatus}`);
+    console.log(`📴 Call ended: ${callSid}, Telnyx status: ${callInfo.telnyx_status}`);
   }
 
+  // **DO NOT log here — wait for AI summary**
+
   res.sendStatus(200);
-};
+});
+
+module.exports = router;

@@ -1,10 +1,8 @@
 // queueManager.js
 require('dotenv').config();
 const axios = require('axios');
-const customers = require('./customers');
-const callStatusMap = require('./callStatusStore'); // your call info store
-const { v4: uuidv4 } = require('uuid');
-
+const customers = require('../../customers');
+const callStatusMap = require('../../callStatusStore'); // your call info store
 
 // Env variables
 const TELNYX_API_KEY = process.env.TELNYX_API_KEY;
@@ -51,8 +49,6 @@ async function placeCall(customer) {
     return;
   }
 
-  const customCallId = uuidv4(); // generate UUID for this call
-
   const payload = {
     ApplicationSid: APPLICATION_SID,
     To: customer.phone_number,
@@ -79,34 +75,20 @@ async function placeCall(customer) {
     );
 
     console.log('API call response data:', response.data);
-
     const callSid = response.data?.sid;
 
 
-    if (callSid) {
-      const callInfo = {
-        call_sid: callSid,
-        custom_call_id: customCallId,
+    if (!callSid) {
+      console.warn('No CallSid returned from Telnyx API');
+    } else {
+      callStatusMap.set(callSid, {
         customer_id: customer.id,
         phone: customer.phone_number,
         first_name: customer.first_name,
         last_name: customer.last_name,
         timestamp: new Date().toISOString(),
-      };
-
-      callStatusMap.set(callSid, callInfo);
-      callStatusMap.set(customCallId, callInfo); // store both ways
+      });
     }
-    // Optional: Also store by custom_call_id for convenience
-    callStatusMap.set(customCallId, {
-      call_sid: callSid,
-      custom_call_id: customCallId,
-      customer_id: customer.id,
-      phone: customer.phone_number,
-      first_name: customer.first_name,
-      last_name: customer.last_name,
-      timestamp: new Date().toISOString(),
-    });
 
     console.log(`📞 Real call started: ${customer.first_name}`);
   } catch (error) {

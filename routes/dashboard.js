@@ -1,68 +1,56 @@
-// routes/dashboard.js
-const callStatusMap = require('../callStatusStore');
-const customers = require('../customers');
-const customerMap = require('../customerIndex');
+const fs = require('fs');
+const path = require('path');
+const csvFilePath = path.join(__dirname, '..', 'call_logs.csv');
 
-function formatDateTime(timestamp) {
-  if (!timestamp) return ['', ''];
-
-  const dateObj = new Date(timestamp);
-  if (isNaN(dateObj)) return ['', ''];
-
-  // Format date as MM/DD/YYYY
-  const month = (dateObj.getMonth() + 1).toString().padStart(2, '0');
-  const day = dateObj.getDate().toString().padStart(2, '0');
-  const year = dateObj.getFullYear();
-
-  const formattedDate = `${month}/${day}/${year}`;
-
-  // Format time as HH:MM am/pm
-  let hours = dateObj.getHours();
-  const minutes = dateObj.getMinutes().toString().padStart(2, '0');
-  const ampm = hours >= 12 ? 'pm' : 'am';
-  hours = hours % 12 || 12; // convert 0 to 12
-
-  const formattedTime = `${hours}:${minutes} ${ampm}`;
-
-  return [formattedDate, formattedTime];
+function formatDateTime(dateStr, timeStr) {
+  if (!dateStr || !timeStr) return ['', ''];
+  // You already have date and time formatted from CSV, so just return them.
+  return [dateStr, timeStr];
 }
 
 module.exports = (req, res) => {
+  if (!fs.existsSync(csvFilePath)) {
+    return res.send('<p>No call logs found yet.</p>');
+  }
+
+  const csvData = fs.readFileSync(csvFilePath, 'utf8');
+  const lines = csvData.trim().split('\n');
+  const headers = lines.shift().split(',');
+
   let html = `
     <h1>📞 Live Call Results Dashboard</h1>
     <table border="1" cellpadding="6" cellspacing="0" style="border-collapse: collapse;">
       <tr>
-        <th>First Name</th>
-        <th>Last Name</th>
-        <th>Phone</th>
-        <th>Intent to Pay</th>
-        <th>Pay Date</th>
-        <th>Follow Up</th>
-        <th>Outcome</th>
-        <th>Transfer Reason</th>
-        <th>Summary</th>
-        <th>Date</th>
-        <th>Time</th>
+        ${headers.map(h => `<th>${h}</th>`).join('')}
       </tr>
   `;
 
-  for (const entry of callStatusMap.values()) {
-    // Find customer by phone number
-    const customer = customerMap.get(entry.customer_id) || {};
+  for (const line of lines) {
+    // Basic CSV parse (fragile, but let's keep it simple)
+    const values = line.match(/("([^"]|"")*"|[^,]+)/g).map(val => val.replace(/^"|"$/g, '').replace(/""/g, '"'));
 
-    const [date, time] = formatDateTime(entry.timestamp);
+    // Map values to headers for clarity
+    const rowData = {};
+    headers.forEach((header, i) => {
+      rowData[header.trim()] = values[i] || '';
+    });
+
+    // Use Date and Time from CSV as timestamp columns
+    const [date, time] = formatDateTime(rowData['Date'], rowData['Time']);
 
     html += `
       <tr>
-        <td>${customer.first_name || ''}</td>
-        <td>${customer.last_name || ''}</td>
-        <td>${entry.phone_number}</td>
-        <td>${entry.intent_to_pay || ''}</td>
-        <td>${entry.intent_to_pay_date || ''}</td>
-        <td>${entry.follow_up || ''}</td>
-        <td>${entry.call_outcome || ''}</td>
-        <td>${entry.transfer_reason || ''}</td>
-        <td>${entry.summary || ''}</td>
+        <td>${rowData['Call ID']}</td>
+        <td>${rowData['First Name']}</td>
+        <td>${rowData['Last Name']}</td>
+        <td>${rowData['Phone']}</td>
+        <td>${rowData['Intent to Pay']}</td>
+        <td>${rowData['Pay Date']}</td>
+        <td>${rowData['Follow Up']}</td>
+        <td>${rowData['Agent Outcome']}</td>
+        <td>${rowData['Call Status']}</td>
+        <td>${rowData['Transfer Reason']}</td>
+        <td style="max-width: 300px; white-space: normal;">${rowData['Summary']}</td>
         <td>${date}</td>
         <td>${time}</td>
       </tr>
