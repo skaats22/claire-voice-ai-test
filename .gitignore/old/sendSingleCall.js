@@ -1,6 +1,6 @@
 require('dotenv').config();
 const axios = require('axios');
-const customers = require('../customers'); // <-- Import customers list
+const customers = require('../../customers'); // <-- Import customers list
 
 const TELNYX_API_KEY = process.env.TELNYX_API_KEY;
 const ACCOUNT_SID = 'ce3abd6a-bbc4-4b1c-b3c8-3a5210e725f6';
