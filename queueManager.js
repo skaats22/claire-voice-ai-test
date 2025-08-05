@@ -1,34 +1,25 @@
+require('dotenv').config();
 const axios = require('axios');
-const customers = require('./customers');
+const customers = require('./customers'); // Make sure this has the current customer list
 
+// Env variables
 const TELNYX_API_KEY = process.env.TELNYX_API_KEY;
-const ACCOUNT_SID = process.env.ACCOUNT_SID || 'ce3abd6a-bbc4-4b1c-b3c8-3a5210e725f6';
-const APPLICATION_SID = process.env.APPLICATION_SID || '2741690567753729623';
-const FROM_NUMBER = process.env.FROM_NUMBER || '+18887600227';
-
+const ACCOUNT_SID = process.env.ACCOUNT_SID;
+const APPLICATION_SID = process.env.APPLICATION_SID;
+const FROM_NUMBER = process.env.FROM_NUMBER;
 const NGROK_URL = process.env.NGROK_URL;
+
+// Endpoints
 const DYNAMIC_URL = `${NGROK_URL}/dynamic-variables`;
 const STATUS_CALLBACK = `${NGROK_URL}/status-callback`;
 
-const MAX_CONCURRENT_CALLS = 10;
-const DRY_RUN = true;
+// Concurrency control
+const MAX_CONCURRENT_CALLS = parseInt(process.env.CONCURRENT_LIMIT, 10) || 1;
 
 let activeCalls = 0;
-const queue = [...customers];
+const queue = [...customers]; // Copy of customer list
 
 async function placeCall(customer) {
-  if (DRY_RUN) {
-    console.log(`[DRY RUN] Pretending to call ${customer.first_name} (${customer.phone_number})`);
-    activeCalls++;
-
-    setTimeout(() => {
-      console.log(`[DRY RUN] Simulated call ended for ${customer.first_name}`);
-      notifyCallEnded();
-    }, 2000); // Simulated 2 second call duration
-
-    return;
-  }
-
   const payload = {
     ApplicationSid: APPLICATION_SID,
     To: customer.phone_number,
@@ -51,16 +42,17 @@ async function placeCall(customer) {
       }
     );
 
-    activeCalls++;
     console.log(`📞 Real call started: ${customer.first_name}`);
   } catch (error) {
     console.error(`❌ Failed to call ${customer.first_name}:`, error.response?.data || error.message);
+    notifyCallEnded(); // If call fails, decrement and try next
   }
 }
 
 function maybeStartNewCalls() {
   while (activeCalls < MAX_CONCURRENT_CALLS && queue.length > 0) {
     const customer = queue.shift();
+    activeCalls++; // Increment before async call
     placeCall(customer);
   }
 

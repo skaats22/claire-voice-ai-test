@@ -1,10 +1,10 @@
 const queueManager = require('../queueManager');
 
 module.exports = (req, res) => {
-  const eventType = req.body?.webhook_payload?.data?.event_type || '';
-  console.log('Webhook event:', eventType);
+  const eventType = req.body?.data?.event_type;
 
-  if (['call.ended', 'call.hangup', 'call.completed'].includes(eventType)) {
+  if (eventType === 'call.hangup') {
+    console.log('📴 Call hangup event received');
     queueManager.notifyCallEnded();
   }
 

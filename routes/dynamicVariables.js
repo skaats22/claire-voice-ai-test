@@ -15,7 +15,7 @@ module.exports = (req, res) => {
     if (conversation_id) conversationToCustomerMap.set(conversation_id, customer);
   }
 
-  const greeting_text = `Hi ${customer.first_name}, this is Claire, I'm an AI Agent calling from ${customer.dealer_name}. 
+  const greeting_text = `Hi ${customer.first_name}, this is Claire! I'm an AI Agent calling from ${customer.dealer_name}. 
   I'm reaching out to remind you of your upcoming payment of $${customer.amount_due} for your ${customer.car_year} ${customer.car_make} ${customer.car_model}. 
   If now's a good time, I'd be happy to help you with your payment—or we can set up a time that works better for you. Diga Español para cambiar al español.`;
 

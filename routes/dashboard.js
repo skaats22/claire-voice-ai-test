@@ -1,6 +1,8 @@
 // routes/dashboard.js
 const callStatusMap = require('../callStatusStore');
 
+console.log('📊 Current logs:', [...callStatusMap.values()]);
+
 module.exports = (req, res) => {
   let html = `
     <h1>📞 Live Call Results Dashboard</h1>
