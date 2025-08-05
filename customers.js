@@ -3,6 +3,7 @@ module.exports = [
   {
     phone_number: "+13109082230",
     first_name: "Alice",
+    last_name: "Sample1",
     car_year: "2018",
     car_make: "Toyota",
     car_model: "Camry",
@@ -28,6 +29,7 @@ module.exports = [
   {
     phone_number: "+13109082230",
     first_name: "Bob",
+    last_name: "Sample2",
     car_year: "2019",
     car_make: "Honda",
     car_model: "Civic",
@@ -53,6 +55,7 @@ module.exports = [
   // {
   //   phone_number: "+13109082230",
   //   first_name: "Charlie",
+  //   last_name: "Sample3",
   //   car_year: "2020",
   //   car_make: "Ford",
   //   car_model: "Focus",
@@ -77,7 +80,8 @@ module.exports = [
   // },
   // {
   //   phone_number: "+13109082230",
-  //   first_name: "Diana",
+  //   first_name: "Diana4",
+  //   last_name: "Sample",
   //   car_year: "2017",
   //   car_make: "Chevrolet",
   //   car_model: "Malibu",
@@ -102,7 +106,8 @@ module.exports = [
   // },
   // {
   //   phone_number: "+13109082230",
-  //   first_name: "Ethan",
+  //   first_name: "Ethan5",
+  //   last_name: "Sample",
   //   car_year: "2016",
   //   car_make: "Nissan",
   //   car_model: "Altima",

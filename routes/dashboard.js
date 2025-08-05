@@ -30,6 +30,8 @@ module.exports = (req, res) => {
     <h1>📞 Live Call Results Dashboard</h1>
     <table border="1" cellpadding="6" cellspacing="0" style="border-collapse: collapse;">
       <tr>
+        <th>First Name</th>
+        <th>Last Name</th>
         <th>Phone</th>
         <th>Intent to Pay</th>
         <th>Pay Date</th>
@@ -47,6 +49,8 @@ module.exports = (req, res) => {
 
     html += `
       <tr>
+        <td>${entry.first_name}</td>
+        <td>${entry.last_name}</td>
         <td>${entry.phone}</td>
         <td>${entry.intent_to_pay}</td>
         <td>${entry.intent_to_pay_date || ''}</td>
