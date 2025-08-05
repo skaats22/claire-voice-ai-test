@@ -1,7 +1,29 @@
 // routes/dashboard.js
 const callStatusMap = require('../callStatusStore');
 
-console.log('📊 Current logs:', [...callStatusMap.values()]);
+function formatDateTime(timestamp) {
+  if (!timestamp) return ['', ''];
+
+  const dateObj = new Date(timestamp);
+  if (isNaN(dateObj)) return ['', ''];
+
+  // Format date as MM/DD/YYYY
+  const month = (dateObj.getMonth() + 1).toString().padStart(2, '0');
+  const day = dateObj.getDate().toString().padStart(2, '0');
+  const year = dateObj.getFullYear();
+
+  const formattedDate = `${month}/${day}/${year}`;
+
+  // Format time as HH:MM am/pm
+  let hours = dateObj.getHours();
+  const minutes = dateObj.getMinutes().toString().padStart(2, '0');
+  const ampm = hours >= 12 ? 'pm' : 'am';
+  hours = hours % 12 || 12; // convert 0 to 12
+
+  const formattedTime = `${hours}:${minutes} ${ampm}`;
+
+  return [formattedDate, formattedTime];
+}
 
 module.exports = (req, res) => {
   let html = `
@@ -15,11 +37,14 @@ module.exports = (req, res) => {
         <th>Outcome</th>
         <th>Transfer Reason</th>
         <th>Summary</th>
-        <th>Timestamp</th>
+        <th>Date</th>
+        <th>Time</th>
       </tr>
   `;
 
   for (const entry of callStatusMap.values()) {
+    const [date, time] = formatDateTime(entry.timestamp);
+
     html += `
       <tr>
         <td>${entry.phone}</td>
@@ -29,7 +54,8 @@ module.exports = (req, res) => {
         <td>${entry.call_outcome || ''}</td>
         <td>${entry.transfer_reason || ''}</td>
         <td>${entry.summary || ''}</td>
-        <td>${entry.timestamp}</td>
+        <td>${date}</td>
+        <td>${time}</td>
       </tr>
     `;
   }

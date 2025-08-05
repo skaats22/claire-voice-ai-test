@@ -13,6 +13,7 @@ const app = express();
 const port = process.env.PORT || 3000;
 
 app.use(bodyParser.json());
+app.use(bodyParser.urlencoded({ extended: true }));
 
 // Route definitions
 app.post('/voice-webhook', voiceWebhookHandler);

@@ -1,10 +1,14 @@
 const queueManager = require('../queueManager');
 
 module.exports = (req, res) => {
-  const eventType = req.body?.data?.event_type;
+  console.log('Webhook body:', req.body);
 
-  if (eventType === 'call.hangup') {
-    console.log('📴 Call hangup event received');
+  // Adjust these to match the actual payload keys you received:
+  const callStatus = req.body.CallStatus;
+  const callSid = req.body.CallSid;
+
+  if (callStatus === 'completed') {
+    console.log(`📴 Call completed received for ${callSid}`);
     queueManager.notifyCallEnded();
   }
 
