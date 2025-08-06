@@ -1,10 +1,8 @@
-// queueManager.js
 require('dotenv').config();
 const axios = require('axios');
 const customers = require('./customers');
 const callStatusMap = require('./callStatusStore'); // your call info store
 const { v4: uuidv4 } = require('uuid');
-
 
 // Env variables
 const TELNYX_API_KEY = process.env.TELNYX_API_KEY;
@@ -51,22 +49,20 @@ async function placeCall(customer) {
     return;
   }
 
-  const customCallId = uuidv4(); // generate UUID for this call
-
-  const payload = {
-    ApplicationSid: APPLICATION_SID,
-    To: customer.phone_number,
-    From: FROM_NUMBER,
-    DynamicVariablesUrl: DYNAMIC_URL,
-    DynamicVariablesMethod: 'POST',
-    StatusCallback: STATUS_CALLBACK,
-    StatusCallbackMethod: 'POST',
-    Metadata: {
-      customer_id: customer.id
-    }
-  };
-
   try {
+    const payload = {
+      ApplicationSid: APPLICATION_SID,
+      To: customer.phone_number,
+      From: FROM_NUMBER,
+      DynamicVariablesUrl: DYNAMIC_URL,
+      DynamicVariablesMethod: 'POST',
+      StatusCallback: STATUS_CALLBACK,
+      StatusCallbackMethod: 'POST',
+      Metadata: {
+        customer_id: customer.id
+      }
+    };
+
     const response = await axios.post(
       `https://api.telnyx.com/v2/texml/Accounts/${ACCOUNT_SID}/Calls`,
       payload,
@@ -78,37 +74,22 @@ async function placeCall(customer) {
       }
     );
 
-    console.log('API call response data:', response.data);
-
     const callSid = response.data?.sid;
-
-
     if (callSid) {
       const callInfo = {
         call_sid: callSid,
-        custom_call_id: customCallId,
         customer_id: customer.id,
-        phone: customer.phone_number,
+        phone_number: customer.phone_number,
         first_name: customer.first_name,
         last_name: customer.last_name,
         timestamp: new Date().toISOString(),
       };
 
+      // Store by callSid only
       callStatusMap.set(callSid, callInfo);
-      callStatusMap.set(customCallId, callInfo); // store both ways
-    }
-    // Optional: Also store by custom_call_id for convenience
-    callStatusMap.set(customCallId, {
-      call_sid: callSid,
-      custom_call_id: customCallId,
-      customer_id: customer.id,
-      phone: customer.phone_number,
-      first_name: customer.first_name,
-      last_name: customer.last_name,
-      timestamp: new Date().toISOString(),
-    });
 
-    console.log(`📞 Real call started: ${customer.first_name}`);
+      console.log(`📞 Real call started: ${customer.first_name} (callSid: ${callSid})`);
+    }
   } catch (error) {
     console.error(`❌ Failed to call ${customer.first_name}:`, error.response?.data || error.message);
     notifyCallEnded(); // Allow next calls to proceed on failure

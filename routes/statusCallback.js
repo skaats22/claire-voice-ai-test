@@ -1,10 +1,11 @@
+// statusCallback.js
 const express = require('express');
 const router = express.Router();
 const callStatusMap = require('../callStatusStore');
 const queueManager = require('../queueManager');
-const { writeToCSV, prepareRowFromCallInfo } = require('../utils/logUtils'); // we'll create utils
 
-router.post('/status-callback', (req, res) => {
+
+router.post('/', (req, res) => {
   const body = req.body;
   const callSid = body.CallSid || body.call_control_id || 'unknown';
   const callInfo = callStatusMap.get(callSid);

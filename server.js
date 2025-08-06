@@ -4,10 +4,10 @@ const bodyParser = require('body-parser');
 
 const queueManager = require('./queueManager');
 const voiceWebhookHandler = require('./routes/voiceWebhook');
-const dynamicVariablesHandler = require('./routes/dynamicVariables');
+const dynamicVariablesHandler = require('./routes/dynamicVariables copy');
 const statusCallbackRouter = require('./routes/statusCallback');
 const dashboardHandler = require('./routes/dashboard');
-const aiSummaryRouter = require('./routes/aiSummary');
+const logInteractionRouter = require('./routes/logInteraction');
 
 
 const app = express();
@@ -17,8 +17,8 @@ app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
 
 // This router includes POST /status-callback
-app.use('/', aiSummaryRouter);
-app.use('/', statusCallbackRouter);
+app.use('/status-callback', statusCallbackRouter);
+app.use('/log-interaction', logInteractionRouter);
 app.post('/voice-webhook', voiceWebhookHandler);
 app.post('/dynamic-variables', dynamicVariablesHandler);
 app.get('/dashboard', dashboardHandler);

@@ -1,1 +1,1 @@
-timestamp,conversation_id,phone,intent_to_pay,intent_to_pay_date,follow_up,call_outcome,transfer_reason,summary
+customer_id,first_name,last_name,phone_number,conversation_id,intent_to_pay,intent_to_pay_date,follow_up,call_outcome,transfer_reason,summary,date,time
